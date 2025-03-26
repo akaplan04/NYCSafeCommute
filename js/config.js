@@ -13,10 +13,7 @@ const CONFIG = {
         // NYPD Complaint Data Current (Year To Date)
         NYC_CRIME_DATA: '/api/crime-data',
         // News API endpoint
-        NEWS_API: '/api/news',
-        // MTA API endpoints
-        MTA_API_KEY: process.env.MTA_API_KEY,
-        MTA_GTFS_URL: 'https://api.mta.info/gtfs/nyct/gtfs.json'
+        NEWS_API: '/api/news'
     }
 };
 

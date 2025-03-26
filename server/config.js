@@ -1,4 +1,4 @@
-require('dotenv').config();
+import 'dotenv/config';
 
 const SERVER_CONFIG = {
     PORT: process.env.PORT || 3000,
@@ -17,4 +17,4 @@ const SERVER_CONFIG = {
     }
 };
 
-module.exports = SERVER_CONFIG; 
+export default SERVER_CONFIG; 

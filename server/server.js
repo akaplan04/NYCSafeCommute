@@ -1,8 +1,13 @@
-require('dotenv').config();
-const express = require('express');
-const fetch = require('node-fetch');
-const path = require('path');
-const SERVER_CONFIG = require('./config');
+import 'dotenv/config';
+import express from 'express';
+import fetch from 'node-fetch';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import SERVER_CONFIG from './config.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 // Serve static files from the root directory

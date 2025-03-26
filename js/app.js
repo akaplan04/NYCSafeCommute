@@ -1,16 +1,13 @@
 class SafeCommuteApp {
     constructor() {
-        // COMMON PROPERTIES
         this.map = null;
         this.heatLayer = null;
-        this.markers = L.layerGroup();
-        
-        // ROUTINGBOB PROPERTIES
         this.currentRoute = null;
         this.crimeData = [];
         this.routingControl = null;
+        this.markers = L.layerGroup();
         
-        // Default configuration from routingbob if window.CONFIG is not available
+        // Default configuration if window.CONFIG is not available
         this.config = window.CONFIG || {
             MAP: {
                 CENTER: [40.7831, -73.9712], // Manhattan center
@@ -24,44 +21,40 @@ class SafeCommuteApp {
             },
             API: {
                 NYC_CRIME_DATA: '/api/crime-data',
-                NEWS_API: '/api/news',
-                MTA_API_KEY: '',
-                MTA_GTFS_URL: 'https://api.mta.info/gtfs/nyct/gtfs.json'
+                NEWS_API: '/api/news'
             }
         };
-
+        
         this.initMap();
+        this.initEventListeners();
         this.loadCrimeData();
     }
 
     initMap() {
-        // Use routingbob's configuration (center, zoom, etc.)
+        // Initialize Leaflet map
         this.map = L.map('map', {
             center: this.config.MAP.CENTER,
             zoom: this.config.MAP.ZOOM,
             zoomControl: false // We'll add it back in a different position
         });
         
-        // Use routingbob's tile layer (cleaner, grayish map style)
+        // Add a cleaner, grayish map style
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
             maxZoom: this.config.MAP.MAX_ZOOM,
             attribution: '© OpenStreetMap contributors & © CartoDB'
         }).addTo(this.map);
 
-        // Add zoom control to the top right
+        // Add zoom control to top right
         L.control.zoom({
             position: 'topright'
         }).addTo(this.map);
 
-        // HEATMAP: merge config from routingbob with optional props from main
-        // Priority to routingbob’s config RADIUS, BLUR, etc.
-        // We add `minOpacity` for better display from main if desired
+        // Initialize heat layer with reduced opacity
         this.heatLayer = L.heatLayer([], {
             radius: this.config.HEATMAP.RADIUS,
             blur: this.config.HEATMAP.BLUR,
             maxZoom: this.config.HEATMAP.MAX_ZOOM,
-            max: 0.5,           // from routingbob example
-            minOpacity: 0.5,    // from main (added for nice fade)
+            max: 0.5,
             gradient: {
                 0.2: 'blue',
                 0.4: 'lime',
@@ -70,49 +63,54 @@ class SafeCommuteApp {
             }
         }).addTo(this.map);
 
-        // Add markers layer (for debugging or labeling crimes)
+        // Add markers layer
         this.markers.addTo(this.map);
 
         // Force a map refresh
         this.map.invalidateSize();
     }
 
+    initEventListeners() {
+        document.getElementById('findRoute').addEventListener('click', () => {
+            this.findRoute();
+        });
+    }
+
     async loadCrimeData() {
         try {
+            console.log('Fetching crime data...');
             const response = await fetch(this.config.API.NYC_CRIME_DATA);
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            const data = await response.json();
-
-            // If the API returns data in an array (or in result.data), adjust as needed
-            // Here we assume the top-level "data" is either the array or we just use "data"
-            this.crimeData = Array.isArray(data) ? data : (data.data || []);
             
-            // Prepare points for the heatmap
-            const points = this.crimeData.map(crime => {
-                const intensity = this.getSeverityIntensity(crime.severity);
-                return [crime.latitude, crime.longitude, intensity];
-            });
-            this.heatLayer.setLatLngs(points);
+            const result = await response.json();
+            console.log('Received data:', result);
+            
+            if (result.data && Array.isArray(result.data)) {
+                const points = result.data.map(crime => {
+                    const intensity = this.getSeverityIntensity(crime.severity);
+                    return [crime.latitude, crime.longitude, intensity];
+                });
 
-            // Also show circle markers for debugging or additional context
-            this.markers.clearLayers();
-            this.crimeData.forEach(crime => {
-                const color = this.getSeverityColor(crime.severity);
-                L.circleMarker([crime.latitude, crime.longitude], {
-                    radius: 8,
-                    color: color,
-                    fillColor: color,
-                    fillOpacity: 0.7
-                })
-                .bindPopup(`Type: ${crime.severity}<br>Location: [${crime.latitude}, ${crime.longitude}]`)
-                .addTo(this.markers);
-            });
+                console.log('Heatmap points:', points);
+                this.heatLayer.setLatLngs(points);
 
-            // Optionally fit map bounds to data
-            if (this.crimeData.length > 0) {
-                const bounds = L.latLngBounds(this.crimeData.map(crime => [crime.latitude, crime.longitude]));
+                this.markers.clearLayers();
+                result.data.forEach(crime => {
+                    const color = this.getSeverityColor(crime.severity);
+                    L.circleMarker([crime.latitude, crime.longitude], {
+                        radius: 8,
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.7
+                    })
+                    .bindPopup(`Type: ${crime.severity}<br>Location: [${crime.latitude}, ${crime.longitude}]`)
+                    .addTo(this.markers);
+                });
+
+                const bounds = L.latLngBounds(result.data.map(crime => [crime.latitude, crime.longitude]));
                 this.map.fitBounds(bounds);
             }
         } catch (error) {
@@ -120,9 +118,24 @@ class SafeCommuteApp {
         }
     }
 
-    /**
-     *  ROUTING-RELATED METHODS (from routingbob)
-     */
+    getSeverityIntensity(severity) {
+        switch (severity) {
+            case 'FELONY': return 1.0;
+            case 'MISDEMEANOR': return 0.7;
+            case 'VIOLATION': return 0.4;
+            default: return 0.5;
+        }
+    }
+
+    getSeverityColor(severity) {
+        switch (severity) {
+            case 'FELONY': return '#ff0000';
+            case 'MISDEMEANOR': return '#ffa500';
+            case 'VIOLATION': return '#ffff00';
+            default: return '#808080';
+        }
+    }
+
     async findRoute() {
         const origin = document.getElementById('origin').value;
         const destination = document.getElementById('destination').value;
@@ -235,30 +248,9 @@ class SafeCommuteApp {
         routeInfo += '</ul>';
         return routeInfo;
     }
-
-    /**
-     *  INTENSITY/COLOR HELPERS (from “main”)
-     */
-    getSeverityIntensity(severity) {
-        switch (severity) {
-            case 'FELONY':      return 1.0;
-            case 'MISDEMEANOR': return 0.7;
-            case 'VIOLATION':   return 0.4;
-            default:            return 0.5;
-        }
-    }
-
-    getSeverityColor(severity) {
-        switch (severity) {
-            case 'FELONY':      return '#ff0000';
-            case 'MISDEMEANOR': return '#ffa500';
-            case 'VIOLATION':   return '#ffff00';
-            default:            return '#808080';
-        }
-    }
 }
 
-// Initialize once DOM is ready
+// Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     new SafeCommuteApp();
-});
+}); 
