@@ -10,7 +10,20 @@ const CONFIG = {
         MAX_ZOOM: 17
     },
     API: {
-        NYC_CRIME_DATA: 'YOUR_NYC_OPEN_DATA_ENDPOINT',
-        NEWS_API: 'YOUR_NEWS_API_KEY'
+        // NYPD Complaint Data Current (Year To Date)
+        NYC_CRIME_DATA: 'https://data.cityofnewyork.us/resource/5uac-w243.json',
+        NYC_CRIME_DATA_HEADERS: {
+            'X-App-Token': process.env.NYC_OPEN_DATA_TOKEN
+        },
+        // News API endpoint
+        NEWS_API: 'https://newsdata.io/api/1/news',
+        NEWS_API_PARAMS: {
+            apikey: process.env.NEWS_API_KEY,
+            country: 'us',
+            category: 'crime',
+            language: 'en'
+        }
     }
-}; 
+};
+
+module.exports = CONFIG; 
