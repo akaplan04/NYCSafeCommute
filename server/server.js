@@ -1,11 +1,18 @@
 require('dotenv').config();
 const express = require('express');
 const fetch = require('node-fetch');
+const path = require('path');
 const app = express();
 const CONFIG = require('../js/config');
 
+// Serve static files from the root directory
+app.use(express.static(path.join(__dirname, '..')));
 app.use(express.json());
-app.use(express.static('../'));
+
+// Serve index.html for the root route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
 
 // Endpoint to fetch crime data
 app.get('/api/crime-data', async (req, res) => {
