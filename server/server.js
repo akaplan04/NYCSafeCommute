@@ -14,17 +14,54 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
+// Add this function to help with debugging
+function formatDate(date) {
+    return date.toISOString().split('T')[0];
+}
+
 // API routes
 app.get('/api/crime-data', async (req, res) => {
     try {
-        const response = await fetch(SERVER_CONFIG.API.NYC_CRIME_DATA, {
-            headers: SERVER_CONFIG.API.NYC_CRIME_DATA_HEADERS
+        // Simpler query - just get recent Manhattan records
+        const url = 'https://data.cityofnewyork.us/resource/qb7u-rbmr.json';
+        const params = new URLSearchParams({
+            '$limit': '1000',
+            '$where': "boro_nm='MANHATTAN'"
         });
+
+        console.log('Fetching from URL:', `${url}?${params}`);
+
+        const response = await fetch(`${url}?${params}`);
+        
+        if (!response.ok) {
+            throw new Error(`API responded with status: ${response.status}`);
+        }
+
         const data = await response.json();
-        res.json(data);
+        console.log(`Received ${data.length} records`);
+
+        // Simple transformation
+        const transformedData = data
+            .filter(crime => crime.latitude && crime.longitude)
+            .map(crime => ({
+                latitude: parseFloat(crime.latitude),
+                longitude: parseFloat(crime.longitude),
+                severity: crime.law_cat_cd || 'UNKNOWN'
+            }))
+            .filter(crime => 
+                !isNaN(crime.latitude) && 
+                !isNaN(crime.longitude)
+            );
+
+        console.log(`Transformed ${transformedData.length} records`);
+        
+        res.json({ data: transformedData });
     } catch (error) {
-        console.error('Error fetching crime data:', error);
-        res.status(500).json({ error: 'Failed to fetch crime data' });
+        console.error('Server Error:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch crime data',
+            details: error.message
+        });
     }
 });
 
@@ -40,7 +77,7 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
-const PORT = SERVER_CONFIG.PORT;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 }); 

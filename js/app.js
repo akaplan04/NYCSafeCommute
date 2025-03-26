@@ -2,70 +2,90 @@ class SafeCommuteApp {
     constructor() {
         this.map = null;
         this.heatLayer = null;
-        this.currentRoute = null;
-        this.crimeData = [];
-        
+        this.markers = L.layerGroup(); // Add markers for debugging
         this.initMap();
-        this.initEventListeners();
+        this.loadCrimeData();
     }
 
     initMap() {
-        // Initialize Leaflet map
-        this.map = L.map('map', {
-            center: window.CONFIG.MAP.CENTER,
-            zoom: window.CONFIG.MAP.ZOOM
-        });
+        this.map = L.map('map').setView([40.7831, -73.9712], 12);
         
-        // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: window.CONFIG.MAP.MAX_ZOOM,
             attribution: '© OpenStreetMap contributors'
         }).addTo(this.map);
 
-        // Initialize heat layer
         this.heatLayer = L.heatLayer([], {
-            radius: window.CONFIG.HEATMAP.RADIUS,
-            blur: window.CONFIG.HEATMAP.BLUR,
-            maxZoom: window.CONFIG.HEATMAP.MAX_ZOOM
+            radius: 30,      // Increased radius
+            blur: 20,        // Increased blur
+            maxZoom: 15,     // Adjusted max zoom
+            max: 1.0,        // Maximum point intensity
+            minOpacity: 0.5  // Minimum opacity
         }).addTo(this.map);
-    }
 
-    initEventListeners() {
-        document.getElementById('findRoute').addEventListener('click', () => {
-            this.findRoute();
-        });
+        this.markers.addTo(this.map);
     }
 
     async loadCrimeData() {
         try {
-            const response = await fetch(window.CONFIG.API.NYC_CRIME_DATA);
-            const data = await response.json();
-            this.crimeData = data;
-            this.updateHeatmap();
+            console.log('Fetching crime data...');
+            const response = await fetch('/api/crime-data');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Received data:', result);
+            
+            if (result.data && Array.isArray(result.data)) {
+                const points = result.data.map(crime => {
+                    const intensity = this.getSeverityIntensity(crime.severity);
+                    return [crime.latitude, crime.longitude, intensity];
+                });
+
+                console.log('Heatmap points:', points);
+                this.heatLayer.setLatLngs(points);
+
+                this.markers.clearLayers();
+                result.data.forEach(crime => {
+                    const color = this.getSeverityColor(crime.severity);
+                    L.circleMarker([crime.latitude, crime.longitude], {
+                        radius: 8,
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.7
+                    })
+                    .bindPopup(`Type: ${crime.severity}<br>Location: [${crime.latitude}, ${crime.longitude}]`)
+                    .addTo(this.markers);
+                });
+
+                const bounds = L.latLngBounds(result.data.map(crime => [crime.latitude, crime.longitude]));
+                this.map.fitBounds(bounds);
+            }
         } catch (error) {
             console.error('Error loading crime data:', error);
         }
     }
 
-    updateHeatmap() {
-        const heatPoints = this.crimeData.map(crime => {
-            const lat = parseFloat(crime.latitude);
-            const lng = parseFloat(crime.longitude);
-            return [lat, lng, 0.5];
-        }).filter(point => point[0] && point[1]);
-
-        this.heatLayer.setLatLngs(heatPoints);
+    getSeverityIntensity(severity) {
+        switch (severity) {
+            case 'FELONY': return 1.0;
+            case 'MISDEMEANOR': return 0.7;
+            case 'VIOLATION': return 0.4;
+            default: return 0.5;
+        }
     }
 
-    async findRoute() {
-        const origin = document.getElementById('origin').value;
-        const destination = document.getElementById('destination').value;
-        // TODO: Implement routing logic
+    getSeverityColor(severity) {
+        switch (severity) {
+            case 'FELONY': return '#ff0000';
+            case 'MISDEMEANOR': return '#ffa500';
+            case 'VIOLATION': return '#ffff00';
+            default: return '#808080';
+        }
     }
 }
 
-// Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    const app = new SafeCommuteApp();
-    app.loadCrimeData();
+    new SafeCommuteApp();
 }); 
