@@ -48,6 +48,7 @@ button:hover {
 #map {
     height: calc(100vh - 120px);
     width: 100%;
+    min-height: 400px;
 }
 
 #route-info {

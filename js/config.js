@@ -11,19 +11,11 @@ const CONFIG = {
     },
     API: {
         // NYPD Complaint Data Current (Year To Date)
-        NYC_CRIME_DATA: 'https://data.cityofnewyork.us/resource/5uac-w243.json',
-        NYC_CRIME_DATA_HEADERS: {
-            'X-App-Token': process.env.NYC_OPEN_DATA_TOKEN
-        },
+        NYC_CRIME_DATA: '/api/crime-data',
         // News API endpoint
-        NEWS_API: 'https://newsdata.io/api/1/news',
-        NEWS_API_PARAMS: {
-            apikey: process.env.NEWS_API_KEY,
-            country: 'us',
-            category: 'crime',
-            language: 'en'
-        }
+        NEWS_API: '/api/news'
     }
 };
 
-module.exports = CONFIG; 
+// Make CONFIG available globally
+window.CONFIG = CONFIG; 

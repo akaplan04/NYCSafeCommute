@@ -11,19 +11,22 @@ class SafeCommuteApp {
 
     initMap() {
         // Initialize Leaflet map
-        this.map = L.map('map').setView(CONFIG.MAP.CENTER, CONFIG.MAP.ZOOM);
+        this.map = L.map('map', {
+            center: window.CONFIG.MAP.CENTER,
+            zoom: window.CONFIG.MAP.ZOOM
+        });
         
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: CONFIG.MAP.MAX_ZOOM,
+            maxZoom: window.CONFIG.MAP.MAX_ZOOM,
             attribution: '© OpenStreetMap contributors'
         }).addTo(this.map);
 
         // Initialize heat layer
         this.heatLayer = L.heatLayer([], {
-            radius: CONFIG.HEATMAP.RADIUS,
-            blur: CONFIG.HEATMAP.BLUR,
-            maxZoom: CONFIG.HEATMAP.MAX_ZOOM
+            radius: window.CONFIG.HEATMAP.RADIUS,
+            blur: window.CONFIG.HEATMAP.BLUR,
+            maxZoom: window.CONFIG.HEATMAP.MAX_ZOOM
         }).addTo(this.map);
     }
 
@@ -35,7 +38,7 @@ class SafeCommuteApp {
 
     async loadCrimeData() {
         try {
-            const response = await fetch('/api/crime-data');
+            const response = await fetch(window.CONFIG.API.NYC_CRIME_DATA);
             const data = await response.json();
             this.crimeData = data;
             this.updateHeatmap();
@@ -57,7 +60,6 @@ class SafeCommuteApp {
     async findRoute() {
         const origin = document.getElementById('origin').value;
         const destination = document.getElementById('destination').value;
-
         // TODO: Implement routing logic
     }
 }

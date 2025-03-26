@@ -2,8 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const fetch = require('node-fetch');
 const path = require('path');
+const SERVER_CONFIG = require('./config');
 const app = express();
-const CONFIG = require('../js/config');
 
 // Serve static files from the root directory
 app.use(express.static(path.join(__dirname, '..')));
@@ -14,11 +14,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
-// Endpoint to fetch crime data
+// API routes
 app.get('/api/crime-data', async (req, res) => {
     try {
-        const response = await fetch(CONFIG.API.NYC_CRIME_DATA, {
-            headers: CONFIG.API.NYC_CRIME_DATA_HEADERS
+        const response = await fetch(SERVER_CONFIG.API.NYC_CRIME_DATA, {
+            headers: SERVER_CONFIG.API.NYC_CRIME_DATA_HEADERS
         });
         const data = await response.json();
         res.json(data);
@@ -28,11 +28,10 @@ app.get('/api/crime-data', async (req, res) => {
     }
 });
 
-// Endpoint to fetch news
 app.get('/api/news', async (req, res) => {
     try {
-        const params = new URLSearchParams(CONFIG.API.NEWS_API_PARAMS);
-        const response = await fetch(`${CONFIG.API.NEWS_API}?${params}`);
+        const params = new URLSearchParams(SERVER_CONFIG.API.NEWS_API_PARAMS);
+        const response = await fetch(`${SERVER_CONFIG.API.NEWS_API}?${params}`);
         const data = await response.json();
         res.json(data);
     } catch (error) {
@@ -41,7 +40,7 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = SERVER_CONFIG.PORT;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 }); 
