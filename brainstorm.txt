@@ -1,0 +1,29 @@
+# Brainstorm Notes
+Last updated: [Date]
+
+## Current Ideas
+- [ ] Idea 1: [Brief description]
+  - Details:
+  - Potential impact:
+  - Next steps:
+
+- [ ] Idea 2: [Brief description]
+  - Details:
+  - Potential impact:
+  - Next steps:
+
+## Completed/Implemented Ideas
+- [x] [Date] Implemented idea: [Brief description]
+
+## Random Thoughts
+* 
+
+## Future Considerations
+* 
+
+---
+Notes:
+- Use [ ] for pending ideas
+- Use [x] for completed/implemented ideas
+- Add dates when possible
+- Include relevant links or references 
