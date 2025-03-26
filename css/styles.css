@@ -49,7 +49,6 @@ button:hover {
     width: 100%;
     height: 600px;
     position: relative;
-    z-index: 1;
 }
 
 #route-info {
@@ -128,4 +127,42 @@ button:hover {
 .transit-list li strong {
     color: #333;
     margin-right: 5px;
+    z-index: 1000;
+}
+
+.legend {
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.legend h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+}
+
+.severity-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.severity-dot.felony {
+    background: #ff0000;
+}
+
+.severity-dot.misdemeanor {
+    background: #ffa500;
+}
+
+.severity-dot.violation {
+    background: #ffff00;
+}
+
+.leaflet-popup-content {
+    font-size: 14px;
+    line-height: 1.4;
 } 

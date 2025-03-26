@@ -25,9 +25,10 @@ class SafeCommuteApp {
                 MTA_GTFS_URL: 'https://api.mta.info/gtfs/nyct/gtfs.json'
             }
         };
-        
+     
+        this.markers = L.layerGroup(); // Add markers for debugging
         this.initMap();
-        this.initEventListeners();
+        this.loadCrimeData();
     }
 
     initMap() {
@@ -67,31 +68,55 @@ class SafeCommuteApp {
         this.map.invalidateSize();
     }
 
-    initEventListeners() {
-        document.getElementById('findRoute').addEventListener('click', () => {
-            this.findRoute();
-        });
-    }
-
     async loadCrimeData() {
         try {
-            const response = await fetch(this.config.API.NYC_CRIME_DATA);
-            const data = await response.json();
-            this.crimeData = data;
-            this.updateHeatmap();
+            console.log('Fetching crime data...');
+            const response = await fetch('/api/crime-data');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Received data:', result);
+            
+            if (result.data && Array.isArray(result.data)) {
+                const points = result.data.map(crime => {
+                    const intensity = this.getSeverityIntensity(crime.severity);
+                    return [crime.latitude, crime.longitude, intensity];
+                });
+
+                console.log('Heatmap points:', points);
+                this.heatLayer.setLatLngs(points);
+
+                this.markers.clearLayers();
+                result.data.forEach(crime => {
+                    const color = this.getSeverityColor(crime.severity);
+                    L.circleMarker([crime.latitude, crime.longitude], {
+                        radius: 8,
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.7
+                    })
+                    .bindPopup(`Type: ${crime.severity}<br>Location: [${crime.latitude}, ${crime.longitude}]`)
+                    .addTo(this.markers);
+                });
+
+                const bounds = L.latLngBounds(result.data.map(crime => [crime.latitude, crime.longitude]));
+                this.map.fitBounds(bounds);
+            }
         } catch (error) {
             console.error('Error loading crime data:', error);
         }
     }
 
-    updateHeatmap() {
-        const heatPoints = this.crimeData.map(crime => {
-            const lat = parseFloat(crime.latitude);
-            const lng = parseFloat(crime.longitude);
-            return [lat, lng, 0.5];
-        }).filter(point => point[0] && point[1]);
-
-        this.heatLayer.setLatLngs(heatPoints);
+    getSeverityIntensity(severity) {
+        switch (severity) {
+            case 'FELONY': return 1.0;
+            case 'MISDEMEANOR': return 0.7;
+            case 'VIOLATION': return 0.4;
+            default: return 0.5;
+        }
     }
 
     async findRoute() {
@@ -206,10 +231,16 @@ class SafeCommuteApp {
         routeInfo += '</ul>';
         return routeInfo;
     }
+
+    getSeverityColor(severity) {
+        switch (severity) {
+            case 'FELONY': return '#ff0000';
+            case 'MISDEMEANOR': return '#ffa500';
+            case 'VIOLATION': return '#ffff00';
+            default: return '#808080';
+    }
 }
 
-// Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    const app = new SafeCommuteApp();
-    app.loadCrimeData();
+    new SafeCommuteApp();
 }); 
