@@ -45,13 +45,18 @@ button:hover {
     background: #0056b3;
 }
 
+/* Merge #map — routingbob height/position win; 
+   keep width: 100% (shared) & min-height from main. */
 #map {
     width: 100%;
-    height: 600px;
-    position: relative;
+    height: 600px;          /* from routingbob */
+    position: relative;     /* from routingbob */
+    min-height: 500px;      /* from main (no direct conflict) */
     z-index: 1;
 }
 
+/* Merge #route-info — routingbob z-index, max-height, overflow win;
+   keep shared properties from both. */
 #route-info {
     position: fixed;
     left: 20px;
@@ -62,11 +67,12 @@ button:hover {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     max-width: 300px;
-    max-height: 80vh;
-    overflow-y: auto;
-    z-index: 2;
+    max-height: 80vh;       /* from routingbob */
+    overflow-y: auto;       /* from routingbob */
+    z-index: 2;             /* from routingbob, overrides main's 1000 */
 }
 
+/* Additional routingbob route styling */
 .route-legend {
     margin-bottom: 15px;
 }
@@ -128,4 +134,42 @@ button:hover {
 .transit-list li strong {
     color: #333;
     margin-right: 5px;
-} 
+}
+
+/* Additional main styles that don't conflict with routingbob */
+.legend {
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.legend h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+}
+
+.severity-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.severity-dot.felony {
+    background: #ff0000;
+}
+
+.severity-dot.misdemeanor {
+    background: #ffa500;
+}
+
+.severity-dot.violation {
+    background: #ffff00;
+}
+
+.leaflet-popup-content {
+    font-size: 14px;
+    line-height: 1.4;
+}
