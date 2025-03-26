@@ -45,25 +45,98 @@ button:hover {
     background: #0056b3;
 }
 
+/* Merge #map — routingbob height/position win; 
+   keep width: 100% (shared) & min-height from main. */
 #map {
-    height: 80vh;
-    min-height: 500px;
     width: 100%;
+    height: 600px;          /* from routingbob */
+    position: relative;     /* from routingbob */
+    min-height: 500px;      /* from main (no direct conflict) */
     z-index: 1;
 }
 
+/* Merge #route-info — routingbob z-index, max-height, overflow win;
+   keep shared properties from both. */
 #route-info {
-    position: absolute;
-    top: 120px;
-    right: 20px;
+    position: fixed;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
     background: white;
-    padding: 1rem;
-    border-radius: 4px;
+    padding: 20px;
+    border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     max-width: 300px;
-    z-index: 1000;
+    max-height: 80vh;       /* from routingbob */
+    overflow-y: auto;       /* from routingbob */
+    z-index: 2;             /* from routingbob, overrides main's 1000 */
 }
 
+/* Additional routingbob route styling */
+.route-legend {
+    margin-bottom: 15px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.color-box {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+}
+
+.route-option {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.route-option h4 {
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.route-option p {
+    margin: 0.25rem 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.transit-details {
+    margin-top: 10px;
+}
+
+.transit-details h5 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.transit-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+.transit-list li {
+    margin-bottom: 8px;
+    padding: 5px;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.transit-list li strong {
+    color: #333;
+    margin-right: 5px;
+}
+
+/* Additional main styles that don't conflict with routingbob */
 .legend {
     background: white;
     padding: 10px;
@@ -99,4 +172,4 @@ button:hover {
 .leaflet-popup-content {
     font-size: 14px;
     line-height: 1.4;
-} 
+}
